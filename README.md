@@ -43,6 +43,11 @@ starting at the checked-out branch:
 | `r` | Type any revision git understands (`HEAD~3`, tags, `stash@{0}`, …). |
 | `q` / `<Esc>` | Cancel. |
 
+The commit list marks the relevant merge-base with `● merge-base with <rev>`:
+while picking the **base** it is the merge-base of the listed branch and `HEAD`
+(the divergence point — usually the base you want); while picking the **target**
+it is the merge-base with the base you just chose.
+
 `<base>`/`<target>` arguments are tab-completed from branch names.
 
 Each diff panel carries a winbar identifying its side — `BASE: <rev>  (<hash>  <subject>)`

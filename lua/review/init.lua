@@ -119,13 +119,13 @@ function M.open(base, target)
   end
 
   picker.select(
-    { prompt = "Base (old) revision", include_worktree = false, config = M.config },
+    { prompt = "Base (old) revision", include_worktree = false, merge_base_with = "HEAD", config = M.config },
     function(b)
       if not b then
         return
       end
       picker.select(
-        { prompt = ("Target (new) revision — %s%s?"):format(b, M.config.range_symbol), include_worktree = true, config = M.config },
+        { prompt = ("Target (new) revision — %s%s?"):format(b, M.config.range_symbol), include_worktree = true, merge_base_with = b, config = M.config },
         function(t)
           if not t then
             return

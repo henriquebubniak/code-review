@@ -135,8 +135,9 @@ end
 ---@field label string
 
 ---Entries for one branch: optional worktree line, then its commits newest first.
+---The merge-base of the branch and `opts.merge_base_with` is annotated.
 ---@param branch string
----@param opts { include_worktree: boolean, config: review.Config }
+---@param opts { include_worktree: boolean, merge_base_with: string|nil, config: review.Config }
 ---@return review.Entry[]
 local function build_entries(branch, opts)
   local entries = {}
@@ -146,11 +147,17 @@ local function build_entries(branch, opts)
       label = "[working tree]  uncommitted changes",
     }
   end
+  local merge_base = opts.merge_base_with and git.merge_base(branch, opts.merge_base_with)
   for _, commit in ipairs(git.commits(branch, opts.config.max_commits)) do
+    local marker = ""
+    -- commit.hash is the short form, i.e. a prefix of the full merge-base hash
+    if merge_base and vim.startswith(merge_base, commit.hash) then
+      marker = ("   ● merge-base with %s"):format(opts.merge_base_with)
+    end
     entries[#entries + 1] = {
       kind = "commit",
       rev = commit.hash,
-      label = ("%s  %s  %-18s %s"):format(commit.hash, commit.date, commit.author, commit.subject),
+      label = ("%s  %s  %-18s %s%s"):format(commit.hash, commit.date, commit.author, commit.subject, marker),
     }
   end
   return entries
@@ -161,8 +168,9 @@ end
 ---The popup lists the commits of one branch at a time (initially the checked-out
 ---branch). `<CR>` selects the commit under the cursor; `<Tab>`/`<S-Tab>` cycle
 ---branches, `b` opens the branch picker, `r` accepts a typed revision,
----`q`/`<Esc>` cancel.
----@param opts { prompt: string, include_worktree: boolean, config: review.Config }
+---`q`/`<Esc>` cancel. When `merge_base_with` is given, the merge-base of the
+---listed branch and that revision is marked in the list.
+---@param opts { prompt: string, include_worktree: boolean, merge_base_with: string|nil, config: review.Config }
 ---@param cb fun(rev: string|nil) receives a rev, M.WORKTREE, or nil if cancelled
 function M.select(opts, cb)
   local ok, branches = pcall(git.branches)
@@ -194,6 +202,7 @@ function M.select(opts, cb)
       { "Identifier", [[^\x\{7,40}\>]] },
       { "Comment", [[\<\d\d\d\d-\d\d-\d\d\>]] },
       { "Special", "^\\[working tree\\]" },
+      { "DiagnosticInfo", [[● merge-base with .*$]] },
     },
     on_close = function()
       finish(nil)

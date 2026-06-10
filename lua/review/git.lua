@@ -74,6 +74,19 @@ function M.branches()
   return branches
 end
 
+---Full hash of the merge-base of two revisions, or nil if there is none.
+---@param a string
+---@param b string
+---@return string|nil
+function M.merge_base(a, b)
+  local ok, out = pcall(M.exec, { "merge-base", a, b })
+  if not ok then
+    return nil
+  end
+  out = vim.trim(out)
+  return out ~= "" and out or nil
+end
+
 ---One-line description of a revision: "<short-hash>  <subject>".
 ---@param rev string
 ---@return string
