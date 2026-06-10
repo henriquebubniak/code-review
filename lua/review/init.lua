@@ -3,11 +3,9 @@ local M = {}
 ---@class review.Config
 ---@field range_symbol ".."|"..." ".." diffs exactly base→target; "..." diffs target against the merge-base (what a PR shows)
 ---@field max_commits integer how many commits to list in the picker
----@field picker "auto"|"telescope"|"select"
 M.config = {
   range_symbol = "..",
   max_commits = 300,
-  picker = "auto",
 }
 
 ---@param opts review.Config|nil

@@ -12,8 +12,6 @@ references, hover.
 
 - Neovim ≥ 0.10
 - [diffview.nvim](https://github.com/sindrets/diffview.nvim)
-- [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim) (optional —
-  gives fuzzy search and a `git show` preview pane; falls back to `vim.ui.select`)
 
 ## Install (lazy.nvim)
 
@@ -34,9 +32,18 @@ references, hover.
 | `:ReviewDiff <base>` | Diff `<base>` against the dirty working tree. |
 | `:ReviewDiff <base> <target>` | Diff `<base>` against `<target>`. |
 
-The picker lists branches (most recently committed first) and recent commits, plus
-a `[revision…]` escape hatch for anything git understands (`HEAD~3`, tags,
-`stash@{0}`, …). `<base>`/`<target>` arguments are tab-completed from branch names.
+The picker is a floating window listing the commits of one branch at a time,
+starting at the checked-out branch:
+
+| Key | Effect |
+| --- | --- |
+| `<CR>` | Select the commit under the cursor (or `[working tree]`). |
+| `<Tab>` / `<S-Tab>` | Cycle to the next/previous branch (most recently committed first). |
+| `b` | Pick a branch from a menu. |
+| `r` | Type any revision git understands (`HEAD~3`, tags, `stash@{0}`, …). |
+| `q` / `<Esc>` | Cancel. |
+
+`<base>`/`<target>` arguments are tab-completed from branch names.
 
 Inside the resulting view, everything is stock diffview: `<Tab>`/`<S-Tab>` to cycle
 files, `:DiffviewToggleFiles` for the panel, `:DiffviewClose` to quit.
@@ -49,7 +56,6 @@ require("review").setup({
   -- "..." → diff target against merge-base(base, target), i.e. what a PR shows
   range_symbol = "..",
   max_commits = 300,          -- commits listed in the picker
-  picker = "auto",            -- "auto" | "telescope" | "select"
 })
 ```
 

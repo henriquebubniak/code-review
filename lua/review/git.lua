@@ -25,12 +25,14 @@ end
 ---@field author string
 ---@field subject string
 
----Recent commits reachable from HEAD, newest first.
+---Recent commits reachable from `rev`, newest first.
+---@param rev string branch name or any revision
 ---@param max integer
 ---@return review.Commit[]
-function M.commits(max)
+function M.commits(rev, max)
   local out = M.exec({
     "log",
+    rev,
     "--pretty=format:%h%x09%ad%x09%an%x09%s",
     "--date=short",
     "-n",
@@ -52,18 +54,29 @@ function M.branches()
   local out = M.exec({
     "for-each-ref",
     "--sort=-committerdate",
-    "--format=%(refname:short)",
+    "--format=%(refname)%09%(refname:short)",
     "refs/heads",
     "refs/remotes",
   })
   local branches = {}
   for line in vim.gsplit(out, "\n", { plain = true, trimempty = true }) do
-    -- skip symbolic refs like origin/HEAD
-    if not line:match("/HEAD$") then
-      branches[#branches + 1] = line
+    local refname, short = line:match("^([^\t]*)\t(.*)$")
+    -- skip symbolic refs like refs/remotes/origin/HEAD (whose short name is just "origin")
+    if refname and not refname:match("/HEAD$") then
+      branches[#branches + 1] = short
     end
   end
   return branches
+end
+
+---Name of the currently checked-out branch, or nil when HEAD is detached.
+---@return string|nil
+function M.current_branch()
+  local name = vim.trim(M.exec({ "rev-parse", "--abbrev-ref", "HEAD" }))
+  if name == "" or name == "HEAD" then
+    return nil
+  end
+  return name
 end
 
 ---@return boolean
