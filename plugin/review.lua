@@ -15,8 +15,12 @@ end, {
     if not ok then
       return {}
     end
-    return vim.tbl_filter(function(b)
-      return vim.startswith(b, arglead)
-    end, branches)
+    local names = {}
+    for _, b in ipairs(branches) do
+      if vim.startswith(b.name, arglead) then
+        names[#names + 1] = b.name
+      end
+    end
+    return names
   end,
 })

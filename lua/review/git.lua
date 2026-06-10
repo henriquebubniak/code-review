@@ -48,22 +48,27 @@ function M.commits(rev, max)
   return commits
 end
 
----Local and remote branch names, most recently committed first.
----@return string[]
+---@class review.Branch
+---@field name string short ref name, e.g. "main" or "origin/main"
+---@field date string date of the branch tip commit
+---@field subject string subject of the branch tip commit
+
+---Local and remote branches, most recently committed first.
+---@return review.Branch[]
 function M.branches()
   local out = M.exec({
     "for-each-ref",
     "--sort=-committerdate",
-    "--format=%(refname)%09%(refname:short)",
+    "--format=%(refname)%09%(refname:short)%09%(committerdate:short)%09%(subject)",
     "refs/heads",
     "refs/remotes",
   })
   local branches = {}
   for line in vim.gsplit(out, "\n", { plain = true, trimempty = true }) do
-    local refname, short = line:match("^([^\t]*)\t(.*)$")
+    local refname, short, date, subject = line:match("^([^\t]*)\t([^\t]*)\t([^\t]*)\t(.*)$")
     -- skip symbolic refs like refs/remotes/origin/HEAD (whose short name is just "origin")
     if refname and not refname:match("/HEAD$") then
-      branches[#branches + 1] = short
+      branches[#branches + 1] = { name = short, date = date, subject = subject }
     end
   end
   return branches

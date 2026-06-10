@@ -39,7 +39,7 @@ starting at the checked-out branch:
 | --- | --- |
 | `<CR>` | Select the commit under the cursor (or `[working tree]`). |
 | `<Tab>` / `<S-Tab>` | Cycle to the next/previous branch (most recently committed first). |
-| `b` | Pick a branch from a menu. |
+| `b` | Open the branch picker — same style of popup, listing branches with their tip commit; `<CR>` switches the commit list to that branch. |
 | `r` | Type any revision git understands (`HEAD~3`, tags, `stash@{0}`, …). |
 | `q` / `<Esc>` | Cancel. |
 
