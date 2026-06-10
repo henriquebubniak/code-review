@@ -69,6 +69,13 @@ function M.branches()
   return branches
 end
 
+---One-line description of a revision: "<short-hash>  <subject>".
+---@param rev string
+---@return string
+function M.describe(rev)
+  return vim.trim(M.exec({ "log", "-1", "--pretty=format:%h  %s", rev }))
+end
+
 ---Name of the currently checked-out branch, or nil when HEAD is detached.
 ---@return string|nil
 function M.current_branch()

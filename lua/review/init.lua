@@ -13,20 +13,91 @@ function M.setup(opts)
   M.config = vim.tbl_deep_extend("force", M.config, opts or {})
 end
 
+-- Winbar labels for the two diff panels of the view we are about to open
+-- (pending) and of the view currently open (active).
+local labels = { pending = nil, active = nil }
+
+---@param prefix string
+---@param rev string
+---@return string
+local function describe(prefix, rev)
+  local ok, desc = pcall(require("review.git").describe, rev)
+  local text = ("%s %s%s"):format(prefix, rev, ok and ("  (%s)"):format(desc) or "")
+  -- winbar text is a statusline expression: neutralize '%' in commit subjects
+  return " " .. text:gsub("%%", "%%%%")
+end
+
+---Stamp the diff windows of the current diffview with base/target winbars.
+local function apply_labels()
+  if not labels.active then
+    return
+  end
+  local ok, lib = pcall(require, "diffview.lib")
+  local view = ok and lib.get_current_view() or nil
+  local layout = view and view.cur_layout
+  if not layout then
+    return
+  end
+  for side, text in pairs(labels.active) do
+    local win = layout[side]
+    if win and win.id and vim.api.nvim_win_is_valid(win.id) then
+      vim.wo[win.id].winbar = text
+    end
+  end
+end
+
+local augroup
+local function ensure_autocmds()
+  if augroup then
+    return
+  end
+  augroup = vim.api.nvim_create_augroup("ReviewDiffLabels", { clear = true })
+  vim.api.nvim_create_autocmd("User", {
+    group = augroup,
+    pattern = "DiffviewViewOpened",
+    callback = function()
+      -- only label views opened through review.nvim
+      labels.active = labels.pending
+      labels.pending = nil
+      vim.schedule(apply_labels)
+    end,
+  })
+  -- diff windows/buffers change as files are cycled; re-stamp each time
+  vim.api.nvim_create_autocmd("User", {
+    group = augroup,
+    pattern = "DiffviewDiffBufWinEnter",
+    callback = vim.schedule_wrap(apply_labels),
+  })
+  vim.api.nvim_create_autocmd("User", {
+    group = augroup,
+    pattern = "DiffviewViewClosed",
+    callback = function()
+      labels.active = nil
+    end,
+  })
+end
+
 ---Open diffview for the given range.
 ---@param base string
 ---@param target string|nil a revision, picker.WORKTREE, or nil — both mean dirty working tree
 function M.diff(base, target)
   local picker = require("review.picker")
-  local arg
+  local arg, target_label
   if target == nil or target == picker.WORKTREE then
     -- ":DiffviewOpen <rev>" diffs <rev> against the working tree, dirty changes included
     arg = base
+    target_label = " TARGET: working tree (uncommitted changes)"
   else
     arg = base .. M.config.range_symbol .. target
+    target_label = describe("TARGET:", target)
   end
+
+  ensure_autocmds()
+  labels.pending = { a = describe("BASE:", base), b = target_label }
+
   local ok, err = pcall(vim.cmd.DiffviewOpen, arg)
   if not ok then
+    labels.pending = nil
     vim.notify("review.nvim: DiffviewOpen failed — is diffview.nvim installed?\n" .. tostring(err), vim.log.levels.ERROR)
   end
 end

@@ -45,6 +45,10 @@ starting at the checked-out branch:
 
 `<base>`/`<target>` arguments are tab-completed from branch names.
 
+Each diff panel carries a winbar identifying its side — `BASE: <rev>  (<hash>  <subject>)`
+on the left, `TARGET: …` (or `working tree`) on the right — so you always know which
+revision you are looking at.
+
 Inside the resulting view, everything is stock diffview: `<Tab>`/`<S-Tab>` to cycle
 files, `:DiffviewToggleFiles` for the panel, `:DiffviewClose` to quit.
 
